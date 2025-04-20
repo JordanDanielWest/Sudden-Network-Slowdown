@@ -1,7 +1,7 @@
 # Sudden-Network-Slowdown
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/1fdeab0f-54d0-40dd-a6e1-9a3fac3b5e5d" width="500">
+  <img src=https://github.com/user-attachments/assets/72c897db-4f25-48a6-8256-74625acb1d7c width="500">
 </p>
 
 
