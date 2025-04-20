@@ -18,8 +18,6 @@ The server team has noticed a significant network performance degradation on som
 
 ### High-Level Network-Related IoC Discovery Plan
 
-### High-Level Network-Related IoC Discovery Plan
-
 - **Check `DeviceNetworkEvents`** for excessive or repeated connection attempts to internal IP ranges (e.g., `10.0.0.0/16`), especially targeting a single host.
 - **Use `DeviceProcessEvents`** to trace back the origin of processes initiating network activity—especially those spawned by interactive users.
 - **Cross-reference timestamps** with login activity in `DeviceLogonEvents` to confirm user context.
