@@ -16,10 +16,14 @@
 
 The server team has noticed a significant network performance degradation on some of their older devices attached to the network in the 10.0.0.0/16 network. After ruling out external DDoS attacks, the security team suspects something might be going on internally.
 
+### High-Level Network-Related IoC Discovery Plan
 
-- **Check `DeviceNetworkEvents`**
-- **Check `DeviceProcessEvents`**
-- **Check `DeviceLogonEvents`**
+### High-Level Network-Related IoC Discovery Plan
+
+- **Check `DeviceNetworkEvents`** for excessive or repeated connection attempts to internal IP ranges (e.g., `10.0.0.0/16`), especially targeting a single host.
+- **Use `DeviceProcessEvents`** to trace back the origin of processes initiating network activity—especially those spawned by interactive users.
+- **Cross-reference timestamps** with login activity in `DeviceLogonEvents` to confirm user context.
+
 
 ---
 
