@@ -25,141 +25,256 @@ The server team has noticed a significant network performance degradation on som
 
 ## Steps Taken
 
-### 1. Searched the `DeviceProcessEvents` Table
+### 1. Searched the `DeviceNetworkEvents` Table
 
-I ran a query on John Doe’s computer “windows-target-1” to determine if he was archiving company data. I discovered a ProcessCommandLine that indicates the creation of a 7zip file titled “employee-data-20250416124922.zip” which was saved to the ProgramData folder.
+I started by searching for failed connection attempts in DeviceNetworkEvents table and discovered 23 failed connections on endpoint “edr-machine”
 
 **Query used to locate events:**
 
 ```kql
-let archive_applications = dynamic(["winrar.exe", "7z.exe", "winzip32.exe", "peazip.exe", "Bandizip.exe", "UniExtract.exe", "POWERARC.EXE", "IZArc.exe", "AshampooZIP.exe", "FreeArc.exe"]);
-let VMName = "windows-target-1";
-DeviceProcessEvents
-| where DeviceName == VMName
-| where FileName has_any(archive_applications)
-| order by Timestamp desc
+DeviceNetworkEvents
+| where ActionType == "ConnectionFailed"
+| summarize FailedConnectionAttempts = count() by DeviceName, ActionType, LocalIP, RemoteIP
+| order by FailedConnectionAttempts desc
 
 ```
-![image](https://github.com/user-attachments/assets/c6a6ebff-c56e-4cbe-b530-a3d1688507cc)
-
+![image](https://github.com/user-attachments/assets/1a2741e0-255a-4d5d-9383-6b915cb37740)
 
 ---
 
-### 2. Searched the `DeviceFileEvents` Table
+### 2. Searched the `DeviceNetworkEvents` Table
 
-I took an instance of a zip file being created, copied the Timestamp(2025-04-16T08:49:14.2340327Z) and created a new query under DeviceFileEvents and then observed two minutes after and two minutes before the archive was created. I discovered around the same time that a powershell script was used to install 7zip silently in the background which then collected and zipped employee data into an archive.
+I then ran a query in the DeviceNetworkEvents table to look deeper into the connection attempts between “edr-machine” and port “10.0.0.5” and based on the results I believe a port scan was run.
+
 
 **Query used to locate event:**
 
 ```kql
 
-let specificTime = datetime(2025-04-16T08:49:14.2340327Z);
-let VMName = "windows-target-1";
-DeviceFileEvents
-| where Timestamp between ((specificTime - 2m) .. (specificTime + 2m))
-| where DeviceName == VMName
-| order by Timestamp desc
-| project Timestamp, DeviceName, ActionType, FileName, FolderPath, InitiatingProcessCommandLine
+DeviceNetworkEvents
+| where DeviceName == "edr-machine"
+| where RemoteIP == "10.0.0.5"
+| sort by Timestamp desc
 
 ```
-![image](https://github.com/user-attachments/assets/8154f089-7ecd-45b7-8606-3d38b7f905e5)
-
-
+![image](https://github.com/user-attachments/assets/40ddbc46-67ac-4dbe-b0cf-b57bea71a61e)
 
 ---
 
-### 3. Searched the `DeviceNetworkEvents` Table
+### 3. Searched the `DeviceProcessEvents` Table
 
-I then conducted a query within the DeviceNetworkEvents table and discovered no indication of exfiltration of data from the network.
+I pivoted to the DeviceProcessEvents table and found a powershell execution of portscan.ps1 at Apr 20, 2025 8:12:29 AM.
 
 **Query used to locate events:**
 
 ```kql
-let specificTime = datetime(2025-04-16T08:49:14.2340327Z);
-let VMName = "windows-target-1";
-DeviceNetworkEvents
-| where Timestamp between ((specificTime - 2m) .. (specificTime + 2m))
-| where DeviceName == VMName
-| order by Timestamp desc
-| project Timestamp, DeviceName, ActionType
-
+let SpecificTime = datetime(2025-04-20T13:12:29.9031119Z);
+DeviceProcessEvents
+| where DeviceName == "edr-machine"
+| where Timestamp between ((SpecificTime - 1m) .. (SpecificTime + 1m))
+| project Timestamp, DeviceName, ActionType, FileName, ProcessCommandLine, FolderPath
+| sort by Timestamp asc
 
 ```
 
+![image](https://github.com/user-attachments/assets/05a0d470-61d8-4566-b024-dc8b389e3412)
 
+---
 
+### 4. Search `DeviceProcessEvents` table for instances of powershell
+
+Just prior to the launch of portscan.ps1 from powershell I found a InitiatingProcessparentFilename of userinit.exe which suggests a user initiated powershell session at: Apr 20, 2025 8:12:10 AM.
+
+**Query used to locate events:**
+
+```kql
+// Instances of Powershell
+let SpecificTime = datetime(2025-04-20T13:12:29.9031119Z);
+DeviceProcessEvents
+| where DeviceName == "edr-machine"
+| where FileName == "powershell.exe"
+| where Timestamp between ((SpecificTime - 1m) .. (SpecificTime + 1m))
+| project Timestamp, DeviceName, ActionType, FileName, ProcessCommandLine, FolderPath, InitiatingProcessParentFileName, LogonId
+| sort by Timestamp asc
+
+```
+![image](https://github.com/user-attachments/assets/f0bb2bab-89a7-425b-97a3-79878f7d5298)
+
+---
+
+### 5. Search `DeviceLogonEvents` table
+
+I then pivoted to the DeviceLogonEvents table and found that the user account “ds9-cisco” logged in 2 minutes before the script was run at Apr 20, 2025 8:11:30 AM.
+
+**Query used to locate events:**
+
+```kql
+//use Logon events to determine if a user initiated the portscan
+let SpecificTime = datetime(2025-04-20T13:12:29.9031119Z);
+DeviceLogonEvents
+| where DeviceName == "edr-machine"
+| where Timestamp between ((SpecificTime - 1m) .. (SpecificTime + 1m))
+| project Timestamp, ActionType, LogonType, AccountDomain, AccountName
+| where ActionType == "LogonSuccess"
+| sort by Timestamp desc
+
+```
+
+![image](https://github.com/user-attachments/assets/68044cb0-9238-4fb6-9d11-ab450c83256d)
+
+---
+
+### 6. Search `DeviceProcessEvents`
+
+To confirm user execution of PowerShell, I ran a query that included explorer.exe to verify an interactive login session. The results confirmed that user account "ds9-cisco" launched powershell.exe, which subsequently executed the portscan.ps1 script targeting RemoteIP "10.0.0.5".
+
+```kql
+DeviceProcessEvents
+| where DeviceName == "edr-machine"
+| where Timestamp between (datetime(2025-04-20T13:11:00Z) .. datetime(2025-04-20T13:13:00Z))
+| where FileName == "explorer.exe" or FileName == "powershell.exe"
+| project Timestamp, AccountDomain, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessParentFileName, AccountName
+| sort by Timestamp desc
+
+```
+![image](https://github.com/user-attachments/assets/ab040842-5f25-4f81-92a9-264135180920)
+
+---
 ### Response:
 
-I Immediately isolated the system once archiving of files was discovered.
-I relayed all of the information to the employee’s manager, including the information regarding the staging of zipped data into an archive created at regular intervals via powershell script. There was no clear evidence of exfiltration however I felt the situation was still suspicious enough to report as it seems to indicate staging of data T1074 – Data Staged of the MITRE ATT&CK framework.
+Immediately isolated edr-machine from the network to prevent further lateral movement or scanning. Collected forensic logs and exported relevant artifacts including portscan.ps1. Forwarded a detailed report to ds9-cisco's manager and the internal HR/security liaison. Created a case for potential policy violation and escalation.
+
+---
 
 
 ### MITRE ATT&CK TTPs Identified
-- **T1059 – Command and Scripting Interpreter**
-  - *T1059.001 – PowerShell*  
-	Use of PowerShell script (`exfiltratedata.ps1`) to automate tasks and bypass execution policies.
-- **T1560 – Archive Collected Data**
-  - *T1560.001 – Archive via Utility*  
-	Zipping sensitive files using 7-Zip installed silently via script.
-- **T1074 – Data Staged**  
-Local staging of proprietary data into a ZIP file prior to potential exfiltration.
-- **T1204 – User Execution** 
-Script manually executed under suspicious conditions
-- **T1105 – Ingress Tool Transfer**  
-7-Zip installer was downloaded as part of the process
 
+- **Technique:** PowerShell  
+  **ID:** T1059.001  
+  **Description:** Execution of PowerShell with `-ExecutionPolicy Bypass` to run a script.
+
+- **Technique:** Command and Scripting Interpreter  
+  **ID:** T1059  
+  **Description:** Use of PowerShell as a scripting interpreter to execute commands.
+
+#### Defense Evasion
+
+- **Technique:** Bypass User Account Control  
+  **ID:** T1548.002  
+  **Description:** Use of `-ExecutionPolicy Bypass` to avoid PowerShell execution restrictions.
+
+#### Discovery
+
+- **Technique:** Network Service Scanning  
+  **ID:** T1046  
+  **Description:** Use of a port scanning script to identify open ports and services on the internal network.
+
+- **Technique:** System Network Connections Discovery  
+  **ID:** T1049  
+  **Description:** Enumeration of active network connections or mapping of internal hosts.
+
+#### Command and Control
+
+- **Technique:** Ingress Tool Transfer  
+  **ID:** T1105  
+  **Description:** Download of `portscan.ps1` from an external GitHub repository.
 
 
 ---
 
 ## Chronological Event Timeline 
 
-1. Execution of PowerShell Script – exfiltratedata.ps1
+User Login - ds9-cisco
+Timestamp: 2025-04-20T13:11:30Z
 
-    Timestamp: 2025-04-16T08:49:00.7998534Z
 
-    Event: The user "John Doe" executed a PowerShell script.
+Event: The user account ds9-cisco logged into edr-machine via an interactive session.
 
-    Action: PowerShell script detected.
 
-    File Path: C:\ProgramData\exfiltratedata.ps1
+Action: Successful logon captured in DeviceLogonEvents.
 
-2. Silent Installation of 7-Zip
 
-    Timestamp: 2025-04-16T08:49:07.1290321Z
+Logon Type: Interactive (likely via RDP or local console access).
 
-    Event: 7-Zip was installed silently via the PowerShell script.
 
-    Action: Installation of 7z.exe detected.
 
-    File Path: C:\Program Files\7-Zip\7z.exe
+Session Initialization - Explorer.exe
+Timestamp: 2025-04-20T13:11:36Z
 
-    Command Line: powershell.exe -ExecutionPolicy Bypass -File C:\ProgramData\exfiltratedata.ps1
 
-3. Creation of Archive File – employee-data-20250416124922.zip
+Event: explorer.exe was launched under the ds9-cisco session.
 
-    Timestamp: 2025-04-16T08:49:14.2340327Z
 
-    Event: An archive containing employee data was created.
+Action: Confirms an interactive user session was fully initialized.
 
-    Action: 7z.exe used to zip files.
 
-    File Path: C:\ProgramData\employee-data-20250416124922.zip
+Process Chain: winlogon.exe → userinit.exe → explorer.exe
 
-    Command Line: "C:\Program Files\7-Zip\7z.exe" a C:\ProgramData\employee-data-20250416124922.zip [source files]
 
-4. Network Activity Check – No Exfiltration Detected
 
-    Timestamp Range: 2025-04-16T08:47:14Z – 2025-04-16T08:51:14Z
+Initial PowerShell Launch
+Timestamp: 2025-04-20T13:12:10Z
 
-    Event: Reviewed outbound connections during and around archive creation.
 
-    Result: No network exfiltration detected from windows-target-1.
+Event: powershell.exe was launched manually during the session.
+
+
+Action: No script execution yet, just interactive PowerShell access.
+
+
+Parent Process: explorer.exe
+
+
+Command: powershell.exe
+
+
+
+Script Execution - Portscan Script (portscan.ps1)
+Timestamp: 2025-04-20T13:12:29Z
+
+
+Event: The user ds9-cisco executed the portscan.ps1 script.
+
+
+Action: The script was downloaded via Invoke-WebRequest and run with bypassed execution policy.
+
+
+File Path: C:\programdata\portscan.ps1
+
+
+Process Path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+
+
+Command: powershell.exe -ExecutionPolicy Bypass -File C:\programdata\portscan.ps1
+
+
+Parent Process: cmd.exe, originally launched by PowerShell.
+
+
+
+Port Scan Activity
+Timestamp Range: 2025-04-20T13:12:30Z → 13:13:01Z
+
+
+Event: The script initiated numerous connection attempts to internal IPs, especially targeting 10.0.0.5.
+
+
+Action: Identified as internal port scanning, likely probing for open services.
+
+
+Table Reference: DeviceNetworkEvents confirmed failed connections originating from edr-machine.
+
 ---
 
 ## Summary
 
-John Doe downloaded a PowerShell script named `exfiltratedata.ps1` from a remote GitHub repository and saved it to the `C:\ProgramData\` directory. He then executed the script with PowerShell, bypassing the default execution policy. As a result, the script simulated data exfiltration, demonstrating how an attacker might collect and transmit sensitive information.
+Through a timeline-based investigation, it was determined that the user account ds9-cisco logged into edr-machine and initiated a PowerShell session during an active desktop session. Shortly thereafter, a script named portscan.ps1 was executed, which triggered a wave of internal port scanning behavior targeting IPs in the 10.0.0.0/16 subnet. Logs confirmed 23 failed connections to internal devices, consistent with port scanning behavior. The parent-child process chain and timestamps support that this action was manually initiated by the logged-in user.
 
 ---
+
+## Recommendations
+
+Recommendations and Improvements
+To reduce the attack surface and mitigate similar behavior in the future, the following measures are recommended:
+Restrict PowerShell usage: Apply Group Policy to limit PowerShell usage to administrators or known automation accounts. Constrain Execution Policy: Set organization-wide default PowerShell Execution Policy to AllSigned or Restricted. Implement AppLocker or WDAC: Block unapproved script execution paths such as C:\programdata\ or C:\Users\Public\. Monitor for Suspicious Web Requests: Enable alerts for Invoke-WebRequest and similar tools accessing external domains. Enable Network Segmentation: Prevent unrestricted communication across all devices on the internal subnet. User Awareness Training: Educate employees about acceptable use policies and risks associated with internal scanning or scripting tools.
 
