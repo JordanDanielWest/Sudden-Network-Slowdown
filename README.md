@@ -184,85 +184,45 @@ Immediately isolated edr-machine from the network to prevent further lateral mov
 
 ## Chronological Event Timeline 
 
-User Login - ds9-cisco
-Timestamp: 2025-04-20T13:11:30Z
+1. **User Login – ds9-cisco**
 
+    **Timestamp:** 2025-04-20T13:11:30Z  
+    **Event:** The user account `ds9-cisco` logged into `edr-machine` via an interactive session.  
+    **Action:** Successful logon captured in `DeviceLogonEvents`.  
+    **Logon Type:** Interactive (likely via RDP or local console access).
 
-Event: The user account ds9-cisco logged into edr-machine via an interactive session.
+2. **Session Initialization – explorer.exe**
 
+    **Timestamp:** 2025-04-20T13:11:36Z  
+    **Event:** `explorer.exe` was launched under the `ds9-cisco` session.  
+    **Action:** Confirms an interactive user session was fully initialized.  
+    **Process Chain:** `winlogon.exe → userinit.exe → explorer.exe`
 
-Action: Successful logon captured in DeviceLogonEvents.
+3. **Initial PowerShell Launch**
 
+    **Timestamp:** 2025-04-20T13:12:10Z  
+    **Event:** `powershell.exe` was launched manually during the session.  
+    **Action:** No script execution yet, just interactive PowerShell access.  
+    **Parent Process:** `explorer.exe`  
+    **Command:** `powershell.exe`
 
-Logon Type: Interactive (likely via RDP or local console access).
+4. **Script Execution – Portscan Script (portscan.ps1)**
 
+    **Timestamp:** 2025-04-20T13:12:29Z  
+    **Event:** The user `ds9-cisco` executed the `portscan.ps1` script.  
+    **Action:** The script was downloaded via `Invoke-WebRequest` and run with bypassed execution policy.  
+    **File Path:** `C:\programdata\portscan.ps1`  
+    **Process Path:** `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`  
+    **Command:** `powershell.exe -ExecutionPolicy Bypass -File C:\programdata\portscan.ps1`  
+    **Parent Process:** `cmd.exe`, originally launched by PowerShell.
 
+5. **Port Scan Activity**
 
-Session Initialization - Explorer.exe
-Timestamp: 2025-04-20T13:11:36Z
+    **Timestamp Range:** 2025-04-20T13:12:30Z → 13:13:01Z  
+    **Event:** The script initiated numerous connection attempts to internal IPs, especially targeting `10.0.0.5`.  
+    **Action:** Identified as internal port scanning, likely probing for open services.  
+    **Table Reference:** `DeviceNetworkEvents` confirmed failed connections originating from `edr-machine`.
 
-
-Event: explorer.exe was launched under the ds9-cisco session.
-
-
-Action: Confirms an interactive user session was fully initialized.
-
-
-Process Chain: winlogon.exe → userinit.exe → explorer.exe
-
-
-
-Initial PowerShell Launch
-Timestamp: 2025-04-20T13:12:10Z
-
-
-Event: powershell.exe was launched manually during the session.
-
-
-Action: No script execution yet, just interactive PowerShell access.
-
-
-Parent Process: explorer.exe
-
-
-Command: powershell.exe
-
-
-
-Script Execution - Portscan Script (portscan.ps1)
-Timestamp: 2025-04-20T13:12:29Z
-
-
-Event: The user ds9-cisco executed the portscan.ps1 script.
-
-
-Action: The script was downloaded via Invoke-WebRequest and run with bypassed execution policy.
-
-
-File Path: C:\programdata\portscan.ps1
-
-
-Process Path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-
-
-Command: powershell.exe -ExecutionPolicy Bypass -File C:\programdata\portscan.ps1
-
-
-Parent Process: cmd.exe, originally launched by PowerShell.
-
-
-
-Port Scan Activity
-Timestamp Range: 2025-04-20T13:12:30Z → 13:13:01Z
-
-
-Event: The script initiated numerous connection attempts to internal IPs, especially targeting 10.0.0.5.
-
-
-Action: Identified as internal port scanning, likely probing for open services.
-
-
-Table Reference: DeviceNetworkEvents confirmed failed connections originating from edr-machine.
 
 ---
 
