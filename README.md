@@ -12,9 +12,9 @@
 - Kusto Query Language (KQL)
 - Powershell
 
-##  Investigation Scenario: Data Exfiltration from PIPd Employee
+##  Investigation Scenario: Sudden-Network-Slowdown
 
-An employee named John Doe, working in a sensitive department, recently got put on a performance improvement plan (PIP). After John threw a fit, management has raised concerns that John may be planning to steal proprietary information and then quit the company. Your task is to investigate John's activities on his corporate device (windows-target-1) using Microsoft Defender for Endpoint (MDE) and ensure nothing suspicious is taking place.
+The server team has noticed a significant network performance degradation on some of their older devices attached to the network in the 10.0.0.0/16 network. After ruling out external DDoS attacks, the security team suspects something might be going on internally.
 
 
 - **Check `DeviceProcessEvents`**
