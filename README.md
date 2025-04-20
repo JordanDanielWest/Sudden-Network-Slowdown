@@ -1,11 +1,9 @@
-# Sudden-Network-Slowdown
-
 <p align="center">
   <img src=https://github.com/user-attachments/assets/72c897db-4f25-48a6-8256-74625acb1d7c width="500">
 </p>
 
 
-# Suspected Exfiltration of Company Data
+# Sudden-Network-Slowdown
 - [Scenario Creation](https://github.com/JordanDanielWest/Exfiltration-of-Company-Data/blob/main/Exfiltration%20of%20Company%20Data%20Event%20Creation.md)
 
 ## Platforms and Languages Leveraged
