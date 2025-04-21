@@ -144,7 +144,7 @@ DeviceProcessEvents
 ---
 ### Response:
 
-Immediately isolated edr-machine from the network to prevent further lateral movement or scanning. Collected forensic logs and exported relevant artifacts including portscan.ps1. Forwarded a detailed report to ds9-cisco's manager and the internal HR/security liaison. Created a case for potential policy violation and escalation.
+I immediately isolated `edr-machine` from the network to prevent further lateral movement or scanning. Collected forensic logs and exported relevant artifacts including `portscan.ps1`. Forwarded a detailed report to ds9-cisco's manager and the internal HR/security liaison. Created a case for potential policy violation and escalation.
 
 ---
 
@@ -230,13 +230,17 @@ Immediately isolated edr-machine from the network to prevent further lateral mov
 
 ## Summary
 
-Through a timeline-based investigation, it was determined that the user account ds9-cisco logged into edr-machine and initiated a PowerShell session during an active desktop session. Shortly thereafter, a script named portscan.ps1 was executed, which triggered a wave of internal port scanning behavior targeting IPs in the 10.0.0.0/16 subnet. Logs confirmed 23 failed connections to internal devices, consistent with port scanning behavior. The parent-child process chain and timestamps support that this action was manually initiated by the logged-in user.
+Through a timeline-based investigation, it was determined that the user account `ds9-cisco` logged into `edr-machine` and initiated a PowerShell session during an active desktop session. Shortly thereafter, a script named `portscan.ps1` was executed, which triggered an internal port scanner targeting IPs in the 10.0.0.0/16 subnet. Logs confirmed 23 failed connections to internal devices, consistent with port scanning behavior. The parent-child process chain and timestamps support that this action was manually initiated by the logged-in user.
 
 ---
 
-## Recommendations
+## Recommendations and Improvements
 
-Recommendations and Improvements
 To reduce the attack surface and mitigate similar behavior in the future, the following measures are recommended:
-Restrict PowerShell usage: Apply Group Policy to limit PowerShell usage to administrators or known automation accounts. Constrain Execution Policy: Set organization-wide default PowerShell Execution Policy to AllSigned or Restricted. Implement AppLocker or WDAC: Block unapproved script execution paths such as C:\programdata\ or C:\Users\Public\. Monitor for Suspicious Web Requests: Enable alerts for Invoke-WebRequest and similar tools accessing external domains. Enable Network Segmentation: Prevent unrestricted communication across all devices on the internal subnet. User Awareness Training: Educate employees about acceptable use policies and risks associated with internal scanning or scripting tools.
+- Restrict PowerShell usage: Apply Group Policy to limit PowerShell usage to administrators or known automation accounts.
+- Constrain Execution Policy: Set organization-wide default PowerShell Execution Policy to AllSigned or Restricted.
+- Implement AppLocker or WDAC: Block unapproved script execution paths such as C:\programdata\ or C:\Users\Public\.
+- Monitor for Suspicious Web Requests: Enable alerts for Invoke-WebRequest and similar tools accessing external domains.
+- Enable Network Segmentation: Prevent unrestricted communication across all devices on the internal subnet.
+- User Awareness Training: Educate employees about acceptable use policies and risks associated with internal scanning or scripting tools.
 
