@@ -65,7 +65,7 @@ DeviceNetworkEvents
 
 ### 3. Searched the `DeviceProcessEvents` Table
 
-I pivoted to the DeviceProcessEvents table and found a powershell execution of portscan.ps1 at Apr 20, 2025 8:12:29 AM.
+I pivoted to the DeviceProcessEvents table and found a powershell execution of `portscan.ps1` at Apr 20, 2025 8:12:29 AM.
 
 **Query used to locate events:**
 
