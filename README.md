@@ -46,7 +46,7 @@ DeviceNetworkEvents
 
 ### 2. Searched the `DeviceNetworkEvents` Table
 
-I then ran a query in the DeviceNetworkEvents table to look deeper into the connection attempts between “edr-machine” and port “10.0.0.5” and based on the results I believe a port scan was run.
+I then ran a query in the DeviceNetworkEvents table to look deeper into the connection attempts between “edr-machine” and port “10.0.0.5” and based on the sequential order of ports I believe a port scan was run.
 
 
 **Query used to locate event:**
