@@ -128,7 +128,7 @@ DeviceLogonEvents
 
 ### 6. Search `DeviceProcessEvents`
 
-To confirm user execution of PowerShell, I ran a query that included explorer.exe to verify an interactive login session. The results confirmed that user account "ds9-cisco" launched powershell.exe, which subsequently executed the portscan.ps1 script targeting RemoteIP "10.0.0.5".
+To confirm user execution of PowerShell, I ran a query that included explorer.exe to verify an interactive login session. The results confirmed that user account `ds9-cisco` launched powershell.exe, which subsequently executed the portscan.ps1 script targeting RemoteIP `10.0.0.5`.
 
 ```kql
 DeviceProcessEvents
