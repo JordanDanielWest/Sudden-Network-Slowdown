@@ -29,7 +29,7 @@ The server team has noticed a significant network performance degradation on som
 
 ### 1. Searched the `DeviceNetworkEvents` Table
 
-I started by searching for failed connection attempts in DeviceNetworkEvents table and discovered 23 failed connections on endpoint “edr-machine”
+I started by searching for failed connection attempts in DeviceNetworkEvents table and discovered 23 failed connections on endpoint `edr-machine`.
 
 **Query used to locate events:**
 
@@ -46,7 +46,7 @@ DeviceNetworkEvents
 
 ### 2. Searched the `DeviceNetworkEvents` Table
 
-I then ran a query in the DeviceNetworkEvents table to look deeper into the connection attempts between “edr-machine” and port “10.0.0.5” and based on the sequential order of ports I believe a port scan was run.
+I then ran a query in the DeviceNetworkEvents table to look deeper into the connection attempts between `edr-machine` and port `10.0.0.5` and based on the sequential order of ports I believe a port scan was run.
 
 
 **Query used to locate event:**
