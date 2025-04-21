@@ -4,7 +4,7 @@
 
 
 # Sudden-Network-Slowdown
-- [Scenario Creation](https://github.com/JordanDanielWest/Exfiltration-of-Company-Data/blob/main/Exfiltration%20of%20Company%20Data%20Event%20Creation.md)
+- [Scenario Creation](https://github.com/JordanDanielWest/Sudden-Network-Slowdown/blob/main/Sudden-Network-Slowdown-Scenario-Creation.md)
 
 ## Platforms and Languages Leveraged
 - Windows 10 Virtual Machines (Microsoft Azure)
