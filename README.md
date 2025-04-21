@@ -85,7 +85,7 @@ DeviceProcessEvents
 
 ### 4. Search `DeviceProcessEvents` table for instances of powershell
 
-Just prior to the launch of portscan.ps1 from powershell I found a InitiatingProcessparentFilename of userinit.exe which suggests a user initiated powershell session at: Apr 20, 2025 8:12:10 AM.
+Just prior to the launch of `portscan.ps1` from powershell I found a `InitiatingProcessparentFileName` of `userinit.exe` which suggests a user initiated powershell session at: Apr 20, 2025 8:12:10 AM.
 
 **Query used to locate events:**
 
@@ -106,7 +106,7 @@ DeviceProcessEvents
 
 ### 5. Search `DeviceLogonEvents` table
 
-I then pivoted to the DeviceLogonEvents table and found that the user account “ds9-cisco” logged in 2 minutes before the script was run at Apr 20, 2025 8:11:30 AM.
+I then pivoted to the DeviceLogonEvents table and found that the user account `ds9-cisco` logged in 2 minutes before the script was run at Apr 20, 2025 8:11:30 AM.
 
 **Query used to locate events:**
 
