@@ -85,7 +85,7 @@ DeviceProcessEvents
 
 ### 4. Search `DeviceProcessEvents` table for instances of powershell
 
-Just prior to the launch of `portscan.ps1` from powershell I found a `InitiatingProcessparentFileName` of `userinit.exe` which suggests a user initiated powershell session at: Apr 20, 2025 8:12:10 AM.
+Just prior to the launch of `portscan.ps1` from powershell I found a `InitiatingProcessParentFileName` of `userinit.exe` which suggests a user initiated powershell session at: Apr 20, 2025 8:12:10 AM.
 
 **Query used to locate events:**
 
